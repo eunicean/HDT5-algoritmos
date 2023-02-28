@@ -1,3 +1,10 @@
+# Universidad del Valle de Guatemala
+# Algoritmos y Estructuras de Datos
+# Seccion: 30
+# Autor: Eunice Anahi Mata Ixcayau 
+# Carnet: 21231
+# Aux: Cristian no se apellido :P
+
 import simpy, random
 
 # procesos
@@ -13,71 +20,66 @@ class myProcess(object):
         yield env.timeout(time)
         startTime = env.now #time of start of process
         format_time = "{:.6f}".format(time)
-        print("[%s] [RAM] At %s sec \n\tneeds use %d of RAM memory" % (name,format_time, memoryRequired))
+        print()
+        print("[%s] [RAM] Starting time %s sec \n\tneeds to use %d of RAM memory\n\tfor %d instructions" % (name,format_time, memoryRequired,cantInstructions))
 
         #proceso de ready
-        print("[%s] [RAM] \n\t will use %d of RAM memory" % (name,memoryRequired))
-        yield ram_memory.get(memoryRequired) #takes ram
+        print("[%s] [RAM] \n\twill use %d of RAM memory" % (name,memoryRequired))
+        yield ram_memory.get(memoryRequired) #takes ram memmory
+
 
         #proceso de running
         instructionsDone = 0
         while instructionsDone < cantInstructions:
-            with cpu.request() as req:
-                yield req
+            with cpu.request() as reqCPU:
+                yield reqCPU
 
-                if(cantInstructions - instructionsDone) >= cpu_velocity:
-                    executed = cpu_velocity
-                else:
-                    executed = cantInstructions - instructionsDone
+                executed = (cpu_velocity) if((cantInstructions - instructionsDone) >= cpu_velocity) else (cantInstructions - instructionsDone)
                 
-                print("[%s] [CPU] \n\t CPU runs # instructions:  %d" % (name, executed))
+                print(" [%s] [CPU] \n\tCPU runs # instructions:  %d" % (name, executed))
                 
-                yield env.timeout(executed/cpu_velocity)
+                yield env.timeout(executed/cpu_velocity) #cant of instructions left for cpu to do
                 instructionsDone += executed
                 
                 print("[%s] [CPU]\n\tInstructions done: %d/%d" % (name,instructionsDone,cantInstructions))
-            
-            decision = random.randint(1,2)
 
-            if(decision == 1) and (instructionsDone < cantInstructions):
+            if(random.randint(1,2) == 1) and (instructionsDone < cantInstructions):
                 with __wait__.request() as requesWait:
                     yield requesWait
                     yield env.timeout(1)
             #else return to running AKA the while again
             
-        yield ram_memory.put(memoryRequired) #returns ram
-        format_time2 = "{:.6f}".format(time)
-        print("[%s] [RAM] At %s sec \n\tRelease %d of RAM memory" % (name,format_time2, memoryRequired))
+        yield ram_memory.put(memoryRequired) #returns ram memory
+        endTime = env.now
+        format_time2 = "{:.6f}".format(time)        
+        print("[%s] [RAM] Ending time %s sec \n\tRelease %d of RAM memory" % (name,format_time2, memoryRequired))
+        print()
+        global TotalTime
+        #ListOfTimes.append((endTime - startTime)) # list of times per process
+        TotalTime += (endTime - startTime) # total time minus the starting time
 
-        global ListOfTimes 
-        global TotalTime 
-        ListOfTimes.append((env.now - startTime)) # list of times per process
-        TotalTime += (env.now - startTime) # total time minus the starting time
 
-
+# GLOBAL VARIABLES AND SO
 env = simpy.Environment()
 ram_memory = simpy.Container(env, init=100, capacity=100) #memoria ram
-cpu = simpy.Resource(env, capacity=4)
+cpu = simpy.Resource(env, capacity=1)
 __wait__ = simpy.Resource(env, capacity=2)
-
-
-velocityCPU = 1
-cantProcess = 25
 TotalTime = 0
-ListOfTimes = []
 
-#intervals
-intevalo = 1
+#Data that changes
+velocityCPU = 3
+cantProcess = 100
+interval = 10
+
 
 #calling and running process
 for i in range(cantProcess):
   memoryCant = random.randint(1,10)
   instructionsToDo = random.randint(1, 10)
-  time = random.expovariate(1 / intevalo)
-  env.process(myProcess.processs(env, ("Program No." + str(i)), ram_memory, memoryCant, time, instructionsToDo, velocityCPU))
+  time = random.expovariate(1 / interval)
+  env.process(myProcess.processs(env, ("Process No." + str(i)), ram_memory, memoryCant, time, instructionsToDo, velocityCPU))
 
 env.run()
 
 #avarage
-print()
 print("Avarage time is: " + str((TotalTime / cantProcess)) + " seconds")
