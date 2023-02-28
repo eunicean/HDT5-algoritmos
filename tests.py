@@ -1,15 +1,23 @@
 import simpy 
 
-def car(env):
-    while True:
-        print('Start parking at %d' % env.now)
-        parking_duration = 5
-        yield env.timeout(parking_duration)
+def car(env, name, bcs, driving_time, charge_duration):
+    # Simulate driving to the BCS
+    yield env.timeout(driving_time)
+    
+    # Request one of its charging spots
+    print('%s arriving at %d' % (name, env.now))
+    with bcs.request() as req:
+        yield req
         
-        print('Start driving at %d' % env.now)
-        trip_duration = 2
-        yield env.timeout(trip_duration)
+        # Charge the battery
+        print('%s starting to charge at %s' % (name, env.now))
+        yield env.timeout(charge_duration)
+        print('%s leaving the bcs at %s' % (name, env.now))
 
 env = simpy.Environment()
-env.process(car(env))
-env.run(until=50)
+bcs = simpy.Resource(env,capacity = 2)
+
+for i in range(4):
+    env.process(car(env, 'Car %d' % i, bcs, i*2, 5))
+
+env.run()

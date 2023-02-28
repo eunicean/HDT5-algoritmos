@@ -1,4 +1,4 @@
-## HDT5-algoritmos
+## HDT5 algoritmos y estructura de datos
 Hoja de trabajo 5.
 
 #### Integrantes:
