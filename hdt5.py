@@ -5,7 +5,7 @@
 # Carnet: 21231
 # Aux: Cristian no se apellido :P
 
-import simpy, random
+import simpy, random, time 
 
 # procesos
 class myProcess(object):
@@ -14,12 +14,12 @@ class myProcess(object):
        self.instructionsDone = 0
        self.startTime = env.now
     
-    def processs(env, name, ram_memory, memoryRequired, time, cantInstructions, cpu_velocity):
+    def processs(env, name, ram_memory, memoryRequired, timeProcess, cantInstructions, cpu_velocity):
     
         #proceso de new
-        yield env.timeout(time)
+        yield env.timeout(timeProcess)
         startTime = env.now #time of start of process
-        format_time = "{:.6f}".format(time)
+        format_time = "{:.6f}".format(timeProcess)
         print()
         print("[%s] [RAM] Starting time %s sec \n\tneeds to use %d of RAM memory\n\tfor %d instructions" % (name,format_time, memoryRequired,cantInstructions))
 
@@ -43,41 +43,37 @@ class myProcess(object):
                 
                 print("[%s] [CPU]\n\tInstructions done: %d/%d" % (name,instructionsDone,cantInstructions))
 
+            # proceso de waiting
             if(random.randint(1,2) == 1) and (instructionsDone < cantInstructions):
-                with __wait__.request() as requesWait:
-                    yield requesWait
-                    yield env.timeout(1)
+                time.sleep(1)
             #else return to running AKA the while again
-            
+
+        #proceso running continuacion xd    
         yield ram_memory.put(memoryRequired) #returns ram memory
         endTime = env.now
-        format_time2 = "{:.6f}".format(time)        
+        format_time2 = "{:.6f}".format(timeProcess)        
         print("[%s] [RAM] Ending time %s sec \n\tRelease %d of RAM memory" % (name,format_time2, memoryRequired))
         print()
         global TotalTime
-        #ListOfTimes.append((endTime - startTime)) # list of times per process
         TotalTime += (endTime - startTime) # total time minus the starting time
 
-
+# mf random seed
+random.seed(10)
 # GLOBAL VARIABLES AND SO
 env = simpy.Environment()
 ram_memory = simpy.Container(env, init=100, capacity=100) #memoria ram
 cpu = simpy.Resource(env, capacity=1)
-__wait__ = simpy.Resource(env, capacity=2)
 TotalTime = 0
-
 #Data that changes
 velocityCPU = 3
-cantProcess = 100
+cantProcess = 25
 interval = 10
-
-
 #calling and running process
 for i in range(cantProcess):
+  timeProcess = random.expovariate(1 / interval)
   memoryCant = random.randint(1,10)
   instructionsToDo = random.randint(1, 10)
-  time = random.expovariate(1 / interval)
-  env.process(myProcess.processs(env, ("Process No." + str(i)), ram_memory, memoryCant, time, instructionsToDo, velocityCPU))
+  env.process(myProcess.processs(env, ("Process No." + str(i)), ram_memory, memoryCant, timeProcess, instructionsToDo, velocityCPU))
 
 env.run()
 
